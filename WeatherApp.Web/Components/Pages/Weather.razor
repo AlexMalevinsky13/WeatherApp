@@ -1,0 +1,285 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using MediatR
+@using WeatherApp.Application.Weather.Models
+@using WeatherApp.Application.Weather.Queries
+@inject IMediator Mediator
+
+<PageTitle>Погода в Москве</PageTitle>
+
+<div class="weather-page">
+
+    @if (_isLoading)
+    {
+        <div class="state-container">
+            <div class="spinner"></div>
+            <span>Загрузка погоды...</span>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="state-container error-state">
+            <h3>Не удалось загрузить погоду</h3>
+
+            <p>@_error</p>
+
+            <button class="retry-button"
+                    @onclick="LoadWeatherAsync">
+                Повторить
+            </button>
+        </div>
+    }
+    else if (_forecast is not null)
+    {
+        <section class="current-weather">
+
+            <div class="current-summary">
+
+                <div class="location">
+                    @_forecast.LocationName
+                </div>
+
+                <div class="current-main">
+
+                    <img src="@_forecast.Current.IconUrl"
+                         alt="@_forecast.Current.Condition" />
+
+                    <div class="temperature">
+                        @FormatTemperature(_forecast.Current.TemperatureC)
+                    </div>
+
+                </div>
+
+                <div class="condition">
+                    @_forecast.Current.Condition
+                </div>
+
+                <div class="feels-like">
+                    Ощущается как @FormatTemperature(_forecast.Current.FeelsLikeC)
+                </div>
+
+            </div>
+
+            <div class="current-details">
+
+                <div class="detail">
+                    <span>Влажность</span>
+
+                    <strong>
+                        @_forecast.Current.Humidity%
+                    </strong>
+                </div>
+
+                <div class="detail">
+                    <span>Давление</span>
+
+                    <strong>
+                        @ConvertMbToMmHg(_forecast.Current.PressureMb) мм рт. ст.
+                    </strong>
+                </div>
+
+                <div class="detail">
+                    <span>Ветер</span>
+
+                    <strong>
+                        @_forecast.Current.WindKph.ToString("0.#") км/ч,
+                        @TranslateWindDirection(_forecast.Current.WindDirection)
+                    </strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="forecast-section">
+
+            <h2>Почасовой прогноз</h2>
+
+            <h3>Сегодня</h3>
+
+            <div class="hourly-list">
+
+                @foreach (var hour in _forecast.TodayHours)
+                {
+                    <div class="hour-card">
+
+                        <span class="hour-time">
+                            @hour.Time.ToString("HH:mm")
+                        </span>
+
+                        <img src="@hour.IconUrl"
+                             alt="@hour.Condition"
+                             title="@hour.Condition" />
+
+                        <strong>
+                            @FormatTemperature(hour.TemperatureC)
+                        </strong>
+
+                    </div>
+                }
+
+            </div>
+
+
+            <h3>Завтра</h3>
+
+            <div class="hourly-list">
+
+                @foreach (var hour in _forecast.TomorrowHours)
+                {
+                    <div class="hour-card">
+
+                        <span class="hour-time">
+                            @hour.Time.ToString("HH:mm")
+                        </span>
+
+                        <img src="@hour.IconUrl"
+                             alt="@hour.Condition"
+                             title="@hour.Condition" />
+
+                        <strong>
+                            @FormatTemperature(hour.TemperatureC)
+                        </strong>
+
+                    </div>
+                }
+
+            </div>
+
+        </section>
+
+
+        <section class="forecast-section">
+
+            <h2>Прогноз на 3 дня</h2>
+
+            <div class="daily-list">
+
+                @foreach (var day in _forecast.DailyForecast)
+                {
+                    <div class="day-card">
+
+                        <div class="day-info">
+
+                            <strong>
+                                @day.Date.ToString("dd.MM")
+                            </strong>
+
+                            <div class="day-condition">
+                                @day.Condition
+                            </div>
+
+                        </div>
+
+                        <img src="@day.IconUrl"
+                             alt="@day.Condition" />
+
+                        <div class="day-temperature">
+
+                            @FormatTemperature(day.MaxTemperatureC)
+
+                            <span>
+                                @FormatTemperature(day.MinTemperatureC)
+                            </span>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </section>
+    }
+
+</div>
+
+
+@code {
+
+    private WeatherForecast? _forecast;
+
+    private bool _isLoading = true;
+
+    private string? _error;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        await LoadWeatherAsync();
+
+        StateHasChanged();
+    }
+
+
+    private async Task LoadWeatherAsync()
+    {
+        _isLoading = true;
+        _error = null;
+
+        try
+        {
+            _forecast = await Mediator.Send(
+                new GetWeatherQuery());
+        }
+        catch
+        {
+            _forecast = null;
+
+            _error =
+                "Не удалось получить данные о погоде. Попробуйте выполнить запрос повторно.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+
+    private static string FormatTemperature(decimal value)
+    {
+        var rounded = Math.Round(value);
+
+        return $"{rounded:+0;-0;0} °C";
+    }
+
+
+    private static decimal ConvertMbToMmHg(decimal pressureMb)
+    {
+        return Math.Round(
+            pressureMb * 0.750062m);
+    }
+
+
+    private static string TranslateWindDirection(string direction)
+    {
+        return direction switch
+        {
+            "N" => "С",
+            "NNE" => "ССВ",
+            "NE" => "СВ",
+            "ENE" => "ВСВ",
+
+            "E" => "В",
+            "ESE" => "ВЮВ",
+            "SE" => "ЮВ",
+            "SSE" => "ЮЮВ",
+
+            "S" => "Ю",
+            "SSW" => "ЮЮЗ",
+            "SW" => "ЮЗ",
+            "WSW" => "ЗЮЗ",
+
+            "W" => "З",
+            "WNW" => "ЗСЗ",
+            "NW" => "СЗ",
+            "NNW" => "ССЗ",
+
+            _ => direction
+        };
+    }
+}
