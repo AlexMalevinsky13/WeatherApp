@@ -223,15 +223,12 @@
 
         try
         {
-            _forecast = await Mediator.Send(
-                new GetWeatherQuery());
+            _forecast = await Mediator.Send(new GetWeatherQuery());
         }
         catch
         {
             _forecast = null;
-
-            _error =
-                "Не удалось получить данные о погоде. Попробуйте выполнить запрос повторно.";
+            _error = "Не удалось получить данные о погоде. Попробуйте выполнить запрос повторно.";
         }
         finally
         {
@@ -243,16 +240,12 @@
     private static string FormatTemperature(decimal value)
     {
         var rounded = Math.Round(value);
-
         return $"{rounded:+0;-0;0} °C";
     }
 
 
-    private static decimal ConvertMbToMmHg(decimal pressureMb)
-    {
-        return Math.Round(
-            pressureMb * 0.750062m);
-    }
+    private static decimal ConvertMbToMmHg(decimal pressureMb) =>
+        Math.Round(pressureMb * 0.750062m);
 
 
     private static string TranslateWindDirection(string direction)
@@ -263,22 +256,18 @@
             "NNE" => "ССВ",
             "NE" => "СВ",
             "ENE" => "ВСВ",
-
             "E" => "В",
             "ESE" => "ВЮВ",
             "SE" => "ЮВ",
             "SSE" => "ЮЮВ",
-
             "S" => "Ю",
             "SSW" => "ЮЮЗ",
             "SW" => "ЮЗ",
             "WSW" => "ЗЮЗ",
-
             "W" => "З",
             "WNW" => "ЗСЗ",
             "NW" => "СЗ",
             "NNW" => "ССЗ",
-
             _ => direction
         };
     }

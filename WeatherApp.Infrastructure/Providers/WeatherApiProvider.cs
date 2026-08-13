@@ -15,12 +15,10 @@ internal class WeatherApiProvider(HttpClient httpClient,
 
     public async Task<WeatherForecast> GetWeatherAsync(CancellationToken cancellationToken = default)
     {
-        var url =
-           $"forecast.json?key={_options.ApiKey}" +
-           $"&q={_options.Latitude.ToString(CultureInfo.InvariantCulture)}," +
-           $"{_options.Longitude.ToString(CultureInfo.InvariantCulture)}" +
-           "&days=3" +
-           "&lang=ru";
+        var latitude = _options.Latitude.ToString(CultureInfo.InvariantCulture);
+        var longitude = _options.Longitude.ToString(CultureInfo.InvariantCulture);
+
+        var url = $"forecast.json?key={_options.ApiKey}&q={latitude},{longitude}&days=3&lang=ru";
 
         var response = await httpClient.GetFromJsonAsync<WeatherApiResponse>(url, cancellationToken)
             ?? throw new InvalidOperationException("Weather API returned an empty response.");
@@ -71,16 +69,14 @@ internal class WeatherApiProvider(HttpClient httpClient,
         };
     }
 
-    private static HourlyWeather MapHour(WeatherApiHour hour)
-    {
-        return new HourlyWeather
+    private static HourlyWeather MapHour(WeatherApiHour hour) =>
+        new()
         {
             Time = DateTime.Parse(hour.Time, CultureInfo.InvariantCulture),
             TemperatureC = hour.TemperatureC,
             Condition = hour.Condition.Text,
             IconUrl = NormalizeIconUrl(hour.Condition.Icon)
         };
-    }
 
     private static string NormalizeIconUrl(string icon)
     {

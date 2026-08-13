@@ -7,8 +7,6 @@ namespace WeatherApp.Application.Weather.Queries;
 public sealed class GetWeatherQueryHandler(IWeatherProvider weatherProvider) 
     : IRequestHandler<GetWeatherQuery, WeatherForecast>
 {
-    public Task<WeatherForecast> Handle(GetWeatherQuery request, CancellationToken cancellationToken)
-    {
-        return weatherProvider.GetWeatherAsync(cancellationToken);
-    }
+    public Task<WeatherForecast> Handle(GetWeatherQuery request, CancellationToken cancellationToken) =>
+        weatherProvider.GetWeatherAsync(cancellationToken);
 }
