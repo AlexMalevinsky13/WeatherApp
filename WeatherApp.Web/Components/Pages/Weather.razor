@@ -197,13 +197,14 @@
 
 
 @code {
+    // Conversion factor: 1 mbar ≈ 0.750062 mmHg
+    private const decimal MbToMmHg = 0.750062m;
 
     private WeatherForecast? _forecast;
 
     private bool _isLoading = true;
 
     private string? _error;
-
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -245,7 +246,7 @@
 
 
     private static decimal ConvertMbToMmHg(decimal pressureMb) =>
-        Math.Round(pressureMb * 0.750062m);
+        Math.Round(pressureMb * MbToMmHg);
 
 
     private static string TranslateWindDirection(string direction)
